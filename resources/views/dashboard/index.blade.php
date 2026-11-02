@@ -142,6 +142,33 @@
         </div>
 
     </main>
+    
+    @if (auth()->user()->role === 'admin')
+        <div style="background: white; padding: 24px; border-radius: 10px; margin: 20px 0;">
+
+            <h2 style="margin-bottom: 8px;">Manajemen Pengguna</h2>
+
+            <p style="color: #718096; margin-bottom: 20px;">
+                Kelola akun pengguna, jabatan, dan hak akses di dalam sistem SIRKA.
+            </p>
+
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+
+                <a href="{{ route('users.index') }}"
+                style="background: #176b50; color: white; padding: 12px 18px;
+                border-radius: 6px; text-decoration: none;">
+                    Kelola Pengguna
+                </a>
+
+                <a href="{{ route('users.create') }}"
+                style="background: #e2e8f0; color: #263238; padding: 12px 18px;
+                border-radius: 6px; text-decoration: none;">
+                    + Tambah Pengguna
+                </a>
+
+            </div>
+        </div>
+    @endif
 
 </body>
 </html>
