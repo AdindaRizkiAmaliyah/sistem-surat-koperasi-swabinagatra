@@ -211,7 +211,7 @@
                             <td>{{ $users->firstItem() + $loop->index }}</td>
                             <td>{{ $user->name }}</td>
                             <td>{{ $user->email }}</td>
-                            <td>{{ $user->department?->name ?? '-' }}</td>
+                            <td>{{ $user->department?->department_name ?? '-' }}</td>
                             <td>
                                 <span class="badge">
                                     {{ ucfirst($user->role) }}

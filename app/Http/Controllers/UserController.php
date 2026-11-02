@@ -21,7 +21,7 @@ class UserController extends Controller
 
     public function create()
     {
-        $departments = Department::orderBy('name')->get();
+        $departments = Department::orderBy('department_name')->get();
 
         return view('users.create', compact('departments'));
     }
@@ -55,7 +55,7 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $departments = Department::orderBy('name')->get();
+        $departments = Department::orderBy('department_name')->get();
 
         return view('users.edit', compact('user', 'departments'));
     }
