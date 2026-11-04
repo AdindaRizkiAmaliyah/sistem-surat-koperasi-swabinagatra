@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
     //khusus admin dan sekretasris
     Route::middleware(['role:admin,sekretaris'])->group(function () {
     Route::resource('incoming-letters', IncomingLetterController::class)
-        ->only(['index', 'create', 'store']);
+        ->only(['index', 'create', 'store', 'show']);
     Route::get('/incoming-letters/{incomingLetter}/attachments/{attachment}/view',
         [IncomingLetterController::class, 'viewAttachment']
     )->name('incoming-letters.attachments.view');

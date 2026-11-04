@@ -45,12 +45,12 @@
 
         .button {
             display: inline-block;
-            padding: 11px 17px;
+            padding: 10px 15px;
             border-radius: 6px;
             text-decoration: none;
             border: none;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .button-primary {
@@ -58,9 +58,17 @@
             color: white;
         }
 
+        .button-primary:hover {
+            background: #10543e;
+        }
+
         .button-secondary {
             background: #e2e8f0;
             color: #334155;
+        }
+
+        .button-secondary:hover {
+            background: #cbd5e1;
         }
 
         .card {
@@ -86,7 +94,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 950px;
+            min-width: 1050px;
         }
 
         th, td {
@@ -100,6 +108,10 @@
             color: #64748b;
             background: #f8fafc;
             font-weight: 600;
+        }
+
+        td {
+            vertical-align: middle;
         }
 
         .badge {
@@ -170,6 +182,7 @@
                         <th>Kategori</th>
                         <th>Tanggal Diterima</th>
                         <th>Status</th>
+                        <th>Aksi</th>
                     </tr>
                 </thead>
 
@@ -177,21 +190,39 @@
                     @forelse ($letters as $letter)
                         <tr>
                             <td>{{ $letters->firstItem() + $loop->index }}</td>
+
                             <td>{{ $letter->agenda_number }}</td>
+
                             <td>{{ $letter->letter_number ?? '-' }}</td>
+
                             <td>{{ $letter->sender }}</td>
+
                             <td>{{ $letter->subject }}</td>
-                            <td>{{ $letter->category?->category_name ?? '-' }}</td>
-                            <td>{{ \Carbon\Carbon::parse($letter->received_date)->format('d-m-Y') }}</td>
+
+                            <td>
+                                {{ $letter->category?->category_name ?? '-' }}
+                            </td>
+
+                            <td>
+                                {{ \Carbon\Carbon::parse($letter->received_date)->format('d-m-Y') }}
+                            </td>
+
                             <td>
                                 <span class="badge status-registered">
                                     {{ ucfirst($letter->status) }}
                                 </span>
                             </td>
+
+                            <td>
+                                <a href="{{ route('incoming-letters.show', $letter->id) }}"
+                                   class="button button-secondary">
+                                    Detail
+                                </a>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="empty">
+                            <td colspan="9" class="empty">
                                 Belum ada surat masuk yang tercatat.
                             </td>
                         </tr>
