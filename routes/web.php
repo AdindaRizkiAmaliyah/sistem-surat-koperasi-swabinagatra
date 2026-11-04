@@ -36,5 +36,12 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:admin,sekretaris'])->group(function () {
     Route::resource('incoming-letters', IncomingLetterController::class)
         ->only(['index', 'create', 'store']);
+    Route::get('/incoming-letters/{incomingLetter}/attachments/{attachment}/view',
+        [IncomingLetterController::class, 'viewAttachment']
+    )->name('incoming-letters.attachments.view');
+
+    Route::get('/incoming-letters/{incomingLetter}/attachments/{attachment}/download',
+        [IncomingLetterController::class, 'downloadAttachment']
+    )->name('incoming-letters.attachments.download');
 });
 });

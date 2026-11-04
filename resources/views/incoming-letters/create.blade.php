@@ -100,7 +100,7 @@
             </div>
         @endif
 
-        <form action="{{ route('incoming-letters.store') }}" method="POST">
+        <form action="{{ route('incoming-letters.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
             <div class="form-group">
@@ -208,6 +208,22 @@
                 >{{ old('notes') }}</textarea>
             </div>
 
+            <div class="form-group">
+                <label>File Scan Surat (PDF) <span class="required">*</span></label>
+
+                <input
+                    type="file"
+                    name="scan_file"
+                    accept=".pdf,application/pdf"
+                    required
+                >
+
+                <small>Format PDF, maksimal 5 MB.</small>
+
+                @error('scan_file')
+                    <div class="error">{{ $message }}</div>
+                @enderror
+            </div>
             <div class="buttons">
                 <button type="submit">Simpan Surat</button>
                 <a href="{{ route('incoming-letters.index') }}" class="back-button">
