@@ -12,6 +12,7 @@
             background: #f4f6f9;
             margin: 0;
             padding: 30px;
+            color: #333;
         }
 
         .container {
@@ -56,7 +57,8 @@
             overflow-wrap: anywhere;
         }
 
-        .attachment {
+        .attachment,
+        .disposition-item {
             padding: 18px;
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -75,6 +77,8 @@
             border-radius: 5px;
             text-decoration: none;
             font-size: 14px;
+            border: none;
+            cursor: pointer;
         }
 
         .view-button {
@@ -93,11 +97,40 @@
             margin-top: 25px;
         }
 
+        .disposition-button {
+            background: #2563eb;
+            color: white;
+            margin-top: 10px;
+        }
+
         .empty {
             background: #f9fafb;
             padding: 15px;
             border-radius: 5px;
             color: #6b7280;
+            margin-top: 15px;
+        }
+
+        .success-message {
+            background: #dcfce7;
+            color: #166534;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .disposition-item p {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 9px;
+            border-radius: 5px;
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 13px;
         }
 
         @media (max-width: 600px) {
@@ -125,10 +158,18 @@
     <div class="container">
 
         <h2>Detail Surat Masuk</h2>
+
         <p class="description">
             Informasi lengkap surat masuk yang tersimpan dalam SIRKA.
         </p>
 
+        @if (session('success'))
+            <div class="success-message">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        <!-- INFORMASI SURAT -->
         <h3 class="section-title">Informasi Surat</h3>
 
         <div class="detail-row">
@@ -197,6 +238,8 @@
             <div class="value">{{ $incomingLetter->notes ?? '-' }}</div>
         </div>
 
+
+        <!-- ARSIP DIGITAL SURAT -->
         <h3 class="section-title">Arsip Digital Surat</h3>
 
         @if ($incomingLetter->attachments->isNotEmpty())
@@ -248,75 +291,78 @@
 
         @endif
 
+
+        <!-- RIWAYAT DISPOSISI -->
+        <h3 class="section-title">Riwayat Disposisi</h3>
+
+        <a
+            href="{{ route('dispositions.create', $incomingLetter->id) }}"
+            class="button disposition-button"
+        >
+            + Buat Disposisi
+        </a>
+
+        @forelse ($incomingLetter->dispositions as $disposition)
+
+            <div class="disposition-item">
+
+                <p>
+                    <strong>Tujuan:</strong>
+
+                    @if ($disposition->department)
+                        {{ $disposition->department->department_name }}
+                    @elseif ($disposition->recipient)
+                        {{ $disposition->recipient->name }}
+                    @else
+                        Tujuan tidak tersedia
+                    @endif
+                </p>
+
+                <p>
+                    <strong>Dari:</strong>
+                    {{ $disposition->sender?->name ?? '-' }}
+                </p>
+
+                <p>
+                    <strong>Instruksi:</strong>
+                    {{ $disposition->instruction }}
+                </p>
+
+                <p>
+                    <strong>Catatan:</strong>
+                    {{ $disposition->notes ?? '-' }}
+                </p>
+
+                <p>
+                    <strong>Batas Waktu:</strong>
+                    {{ $disposition->deadline?->format('d-m-Y') ?? '-' }}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    <span class="status">
+                        {{ ucfirst($disposition->status) }}
+                    </span>
+                </p>
+
+            </div>
+
+        @empty
+
+            <div class="empty">
+                Belum ada disposisi untuk surat ini.
+            </div>
+
+        @endforelse
+
+
+        <!-- TOMBOL KEMBALI -->
         <a
             href="{{ route('incoming-letters.index') }}"
             class="button back-button"
         >
             Kembali ke Daftar Surat
         </a>
-
-        <!-- Riwayat Disposisi -->
-        <div class="card" style="margin-top: 25px;">
-
-            <h2 style="margin-bottom: 15px;">Riwayat Disposisi</h2>
-
-            <a
-                href="{{ route('dispositions.create', $incomingLetter->id) }}"
-                class="button button-primary"
-            >
-                + Buat Disposisi
-            </a>
-
-            @forelse ($incomingLetter->dispositions as $disposition)
-                <div style="
-                    margin-top: 18px;
-                    padding: 18px;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 8px;
-                ">
-                    <p>
-                        <strong>Tujuan:</strong>
-                        @if ($disposition->department)
-                            {{ $disposition->department->department_name }}
-                        @elseif ($disposition->recipient)
-                            {{ $disposition->recipient->name }}
-                        @else
-                            Tujuan tidak tersedia
-                        @endif
-                    </p>
-
-                    <p style="margin-top: 8px;">
-                        <strong>Dari:</strong>
-                        {{ $disposition->sender?->name ?? '-' }}
-                    </p>
-
-                    <p style="margin-top: 8px;">
-                        <strong>Instruksi:</strong>
-                        {{ $disposition->instruction }}
-                    </p>
-
-                    <p style="margin-top: 8px;">
-                        <strong>Catatan:</strong>
-                        {{ $disposition->notes ?? '-' }}
-                    </p>
-
-                    <p style="margin-top: 8px;">
-                        <strong>Batas waktu:</strong>
-                        {{ $disposition->deadline?->format('d-m-Y') ?? '-' }}
-                    </p>
-
-                    <p style="margin-top: 8px;">
-                        <strong>Status:</strong>
-                        {{ ucfirst($disposition->status) }}
-                    </p>
-                </div>
-            @empty
-                <p style="margin-top: 18px; color: #718096;">
-                    Belum ada disposisi untuk surat ini.
-                </p>
-            @endforelse
-
-        </div>
 
     </div>
 </body>
