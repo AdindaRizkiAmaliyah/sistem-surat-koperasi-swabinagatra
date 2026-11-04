@@ -139,7 +139,14 @@ class IncomingLetterController extends Controller
 
     public function show(IncomingLetter $incomingLetter)
     {
-        $incomingLetter->load('category', 'creator', 'dispositions', 'attachments');
+        $incomingLetter->load(
+            'category',
+            'creator',
+            'dispositions.sender',
+            'dispositions.recipient',
+            'dispositions.department',
+            'attachments'
+        );
 
         return view('incoming-letters.show', compact('incomingLetter'));
     }

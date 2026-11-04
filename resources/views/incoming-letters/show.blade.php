@@ -255,6 +255,69 @@
             Kembali ke Daftar Surat
         </a>
 
+        <!-- Riwayat Disposisi -->
+        <div class="card" style="margin-top: 25px;">
+
+            <h2 style="margin-bottom: 15px;">Riwayat Disposisi</h2>
+
+            <a
+                href="{{ route('dispositions.create', $incomingLetter->id) }}"
+                class="button button-primary"
+            >
+                + Buat Disposisi
+            </a>
+
+            @forelse ($incomingLetter->dispositions as $disposition)
+                <div style="
+                    margin-top: 18px;
+                    padding: 18px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                ">
+                    <p>
+                        <strong>Tujuan:</strong>
+                        @if ($disposition->department)
+                            {{ $disposition->department->department_name }}
+                        @elseif ($disposition->recipient)
+                            {{ $disposition->recipient->name }}
+                        @else
+                            Tujuan tidak tersedia
+                        @endif
+                    </p>
+
+                    <p style="margin-top: 8px;">
+                        <strong>Dari:</strong>
+                        {{ $disposition->sender?->name ?? '-' }}
+                    </p>
+
+                    <p style="margin-top: 8px;">
+                        <strong>Instruksi:</strong>
+                        {{ $disposition->instruction }}
+                    </p>
+
+                    <p style="margin-top: 8px;">
+                        <strong>Catatan:</strong>
+                        {{ $disposition->notes ?? '-' }}
+                    </p>
+
+                    <p style="margin-top: 8px;">
+                        <strong>Batas waktu:</strong>
+                        {{ $disposition->deadline?->format('d-m-Y') ?? '-' }}
+                    </p>
+
+                    <p style="margin-top: 8px;">
+                        <strong>Status:</strong>
+                        {{ ucfirst($disposition->status) }}
+                    </p>
+                </div>
+            @empty
+                <p style="margin-top: 18px; color: #718096;">
+                    Belum ada disposisi untuk surat ini.
+                </p>
+            @endforelse
+
+        </div>
+
     </div>
 </body>
 </html>
