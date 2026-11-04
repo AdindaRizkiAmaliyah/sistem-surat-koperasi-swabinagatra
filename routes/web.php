@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\IncomingLetterController;
 use App\Http\Controllers\DispositionController;
+use App\Http\Controllers\OutgoingLetterController;
 
 // ==========================================
 // AUTHENTICATION
@@ -104,5 +105,21 @@ Route::middleware('auth')->group(function () {
         )->name('dispositions.store');
 
     });
+    // ==========================================
+    // SURAT KELUAR
+    // ==========================================
+
+    Route::resource('outgoing-letters', OutgoingLetterController::class)
+        ->only(['index', 'create', 'store', 'show']);
+
+    Route::get(
+        '/outgoing-letters/{outgoingLetter}/attachments/{attachment}/view',
+        [OutgoingLetterController::class, 'viewAttachment']
+    )->name('outgoing-letters.attachments.view');
+
+    Route::get(
+        '/outgoing-letters/{outgoingLetter}/attachments/{attachment}/download',
+        [OutgoingLetterController::class, 'downloadAttachment']
+    )->name('outgoing-letters.attachments.download');
 
 });
