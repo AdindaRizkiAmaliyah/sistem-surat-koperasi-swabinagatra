@@ -20,7 +20,7 @@
         }
 
         .container {
-            max-width: 1250px;
+            max-width: 1350px;
             margin: 40px auto;
             padding: 0 20px;
         }
@@ -58,17 +58,9 @@
             color: white;
         }
 
-        .button-primary:hover {
-            background: #10543e;
-        }
-
         .button-secondary {
             background: #e2e8f0;
             color: #334155;
-        }
-
-        .button-secondary:hover {
-            background: #cbd5e1;
         }
 
         .card {
@@ -76,7 +68,42 @@
             padding: 22px;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .filter-title {
+            font-size: 17px;
+            margin-bottom: 18px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 7px;
+            color: #475569;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
         }
 
         .alert {
@@ -91,10 +118,14 @@
             color: #166534;
         }
 
+        .card-table {
+            overflow-x: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1050px;
+            min-width: 1100px;
         }
 
         th, td {
@@ -110,20 +141,11 @@
             font-weight: 600;
         }
 
-        td {
-            vertical-align: middle;
-        }
-
         .badge {
             display: inline-block;
             padding: 5px 9px;
             border-radius: 20px;
             font-size: 12px;
-            background: #e2e8f0;
-            color: #334155;
-        }
-
-        .status-registered {
             background: #dbeafe;
             color: #1d4ed8;
         }
@@ -138,10 +160,20 @@
             margin-top: 20px;
         }
 
+        @media (max-width: 900px) {
+            .filter-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         @media (max-width: 650px) {
             .header {
                 align-items: flex-start;
                 flex-direction: column;
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -170,7 +202,83 @@
             </div>
         @endif
 
+        @if ($errors->any())
+            <div class="alert" style="background:#fee2e2;color:#991b1b;">
+                Periksa kembali filter yang kamu masukkan.
+            </div>
+        @endif
+
+        <!-- Form pencarian dan filter -->
         <div class="card">
+            <h2 class="filter-title">Pencarian dan Filter Surat</h2>
+
+            <form action="{{ route('incoming-letters.index') }}" method="GET">
+
+                <div class="filter-grid">
+                    <div class="form-group">
+                        <label for="search">Kata Kunci</label>
+                        <input
+                            type="text"
+                            id="search"
+                            name="search"
+                            placeholder="No. agenda, pengirim, perihal..."
+                            value="{{ request('search') }}"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category_id">Kategori Surat</label>
+                        <select id="category_id" name="category_id">
+                            <option value="">Semua Kategori</option>
+
+                            @foreach ($categories as $category)
+                                <option
+                                    value="{{ $category->id }}"
+                                    {{ request('category_id') == $category->id ? 'selected' : '' }}
+                                >
+                                    {{ $category->category_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="start_date">Tanggal Awal Diterima</label>
+                        <input
+                            type="date"
+                            id="start_date"
+                            name="start_date"
+                            value="{{ request('start_date') }}"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="end_date">Tanggal Akhir Diterima</label>
+                        <input
+                            type="date"
+                            id="end_date"
+                            name="end_date"
+                            value="{{ request('end_date') }}"
+                        >
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="button button-primary">
+                        Cari
+                    </button>
+
+                    <a href="{{ route('incoming-letters.index') }}"
+                       class="button button-secondary">
+                        Reset
+                    </a>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Tabel surat masuk -->
+        <div class="card card-table">
             <table>
                 <thead>
                     <tr>
@@ -190,29 +298,19 @@
                     @forelse ($letters as $letter)
                         <tr>
                             <td>{{ $letters->firstItem() + $loop->index }}</td>
-
                             <td>{{ $letter->agenda_number }}</td>
-
                             <td>{{ $letter->letter_number ?? '-' }}</td>
-
                             <td>{{ $letter->sender }}</td>
-
                             <td>{{ $letter->subject }}</td>
-
-                            <td>
-                                {{ $letter->category?->category_name ?? '-' }}
-                            </td>
-
+                            <td>{{ $letter->category?->category_name ?? '-' }}</td>
                             <td>
                                 {{ \Carbon\Carbon::parse($letter->received_date)->format('d-m-Y') }}
                             </td>
-
                             <td>
-                                <span class="badge status-registered">
+                                <span class="badge">
                                     {{ ucfirst($letter->status) }}
                                 </span>
                             </td>
-
                             <td>
                                 <a href="{{ route('incoming-letters.show', $letter->id) }}"
                                    class="button button-secondary">
@@ -223,7 +321,7 @@
                     @empty
                         <tr>
                             <td colspan="9" class="empty">
-                                Belum ada surat masuk yang tercatat.
+                                Tidak ada surat masuk yang sesuai dengan pencarian.
                             </td>
                         </tr>
                     @endforelse
@@ -235,7 +333,7 @@
             </div>
         </div>
 
-        <div style="margin-top: 20px;">
+        <div>
             <a href="{{ route('dashboard') }}"
                class="button button-secondary">
                 Kembali ke Dashboard

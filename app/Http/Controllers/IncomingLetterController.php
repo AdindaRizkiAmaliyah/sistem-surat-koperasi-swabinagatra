@@ -12,13 +12,56 @@ use App\Models\LetterAttachment;
 
 class IncomingLetterController extends Controller
 {
-    public function index()
+    
+    public function index(Request $request)
     {
-        $letters = IncomingLetter::with('category', 'creator')
-            ->orderBy('received_date', 'desc')
-            ->paginate(10);
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:150'],
+            'category_id' => ['nullable', 'integer', 'exists:letter_categories,id'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
 
-        return view('incoming-letters.index', compact('letters'));
+        $query = IncomingLetter::with('category', 'creator')
+            ->orderBy('received_date', 'desc');
+
+        // Pencarian berdasarkan nomor agenda, nomor surat,
+        // pengirim, atau perihal.
+        if (!empty($validated['search'])) {
+            $search = $validated['search'];
+
+            $query->where(function ($q) use ($search) {
+                $q->where('agenda_number', 'like', "%{$search}%")
+                    ->orWhere('letter_number', 'like', "%{$search}%")
+                    ->orWhere('sender', 'like', "%{$search}%")
+                    ->orWhere('subject', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter berdasarkan kategori surat.
+        if (!empty($validated['category_id'])) {
+            $query->where('category_id', $validated['category_id']);
+        }
+
+        // Filter berdasarkan tanggal diterima.
+        if (!empty($validated['start_date'])) {
+            $query->whereDate('received_date', '>=', $validated['start_date']);
+        }
+
+        if (!empty($validated['end_date'])) {
+            $query->whereDate('received_date', '<=', $validated['end_date']);
+        }
+
+        $letters = $query->paginate(10)->withQueryString();
+
+        $categories = LetterCategory::where('is_active', true)
+            ->orderBy('category_name')
+            ->get();
+
+        return view('incoming-letters.index', compact(
+            'letters',
+            'categories'
+        ));
     }
 
     public function create()
