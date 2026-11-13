@@ -205,6 +205,107 @@ class OutgoingLetterController extends Controller
         );
     }
 
+
+    /**
+     * Menerbitkan lampiran PDF agar dapat diverifikasi secara publik.
+     */
+    public function publishAttachment(
+        OutgoingLetter $outgoingLetter,
+        LetterAttachment $attachment
+    ) {
+        // Memastikan lampiran benar-benar milik surat keluar ini.
+        $attachment = $outgoingLetter->attachments()
+            ->whereKey($attachment->id)
+            ->firstOrFail();
+
+        // Hanya PDF yang boleh diterbitkan.
+        abort_unless(
+            strtolower(pathinfo($attachment->original_name, PATHINFO_EXTENSION)) === 'pdf',
+            422,
+            'Hanya file PDF yang dapat diterbitkan.'
+        );
+
+        $disk = Storage::disk('local');
+
+        abort_unless(
+            $disk->exists($attachment->file_path),
+            404,
+            'File PDF tidak ditemukan.'
+        );
+
+        // Menghitung hash SHA-256 dari file PDF.
+        $fileHash = hash_file(
+            'sha256',
+            $disk->path($attachment->file_path)
+        );
+
+        abort_if(
+            $fileHash === false,
+            500,
+            'Gagal menghitung hash dokumen.'
+        );
+
+        // Membuat ID publik jika belum pernah dibuat.
+        $publicId = $attachment->public_id;
+
+        if (!$publicId) {
+            do {
+                $publicId = 'SIRKA-OUT-' . strtoupper(Str::random(10));
+            } while (
+                LetterAttachment::where('public_id', $publicId)->exists()
+            );
+        }
+
+        // Membuat token baru setiap kali dokumen diterbitkan.
+        // Token lama otomatis tidak berlaku lagi setelah penerbitan ulang.
+        do {
+            $publicToken = Str::random(64);
+        } while (
+            LetterAttachment::where('public_token', $publicToken)->exists()
+        );
+
+        $attachment->update([
+            'public_id' => $publicId,
+            'public_token' => $publicToken,
+            'file_hash' => $fileHash,
+            'is_public' => true,
+            'published_at' => now(),
+            'revoked_at' => null,
+        ]);
+
+        return redirect()
+            ->route('outgoing-letters.show', $outgoingLetter)
+            ->with('success', 'Dokumen berhasil diterbitkan dan dapat diverifikasi.');
+    }
+
+    /**
+     * Mencabut akses publik dokumen.
+     */
+    public function revokeAttachment(
+        OutgoingLetter $outgoingLetter,
+        LetterAttachment $attachment
+    ) {
+        $attachment = $outgoingLetter->attachments()
+            ->whereKey($attachment->id)
+            ->firstOrFail();
+
+        abort_unless(
+            $attachment->is_public,
+            404,
+            'Dokumen belum diterbitkan.'
+        );
+
+        $attachment->update([
+            'is_public' => false,
+            'revoked_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('outgoing-letters.show', $outgoingLetter)
+            ->with('success', 'Akses publik dokumen berhasil dicabut.');
+    }
+
+
     /**
      * Mengunduh lampiran PDF.
      */

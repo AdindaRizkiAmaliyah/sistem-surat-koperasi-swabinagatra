@@ -16,12 +16,21 @@ class LetterAttachment extends Model
         'mime_type',
         'file_size',
         'uploaded_by',
+        'public_id',
+        'public_token',
+        'is_public',
+        'published_at',
+        'revoked_at',
+        'file_hash',
     ];
 
     protected function casts(): array
     {
         return [
             'file_size' => 'integer',
+            'is_public' => 'boolean',
+            'published_at' => 'datetime',
+            'revoked_at' => 'datetime',
         ];
     }
 

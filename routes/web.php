@@ -7,6 +7,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\IncomingLetterController;
 use App\Http\Controllers\DispositionController;
 use App\Http\Controllers\OutgoingLetterController;
+use App\Http\Controllers\PublicDocumentController;
+
 
 // ==========================================
 // AUTHENTICATION
@@ -23,6 +25,16 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
+
+Route::get('/verifikasi/{token}', [
+    PublicDocumentController::class,
+    'verify'
+])->name('documents.verify');
+
+Route::get('/verifikasi/{token}/pdf', [
+    PublicDocumentController::class,
+    'view'
+])->name('documents.verify.pdf');
 
 
 // ==========================================
@@ -121,4 +133,13 @@ Route::middleware('auth')->group(function () {
         [OutgoingLetterController::class, 'downloadAttachment']
     )->name('outgoing-letters.attachments.download');
 
+    Route::post(
+    '/outgoing-letters/{outgoingLetter}/attachments/{attachment}/publish',
+    [OutgoingLetterController::class, 'publishAttachment']
+    )->name('outgoing-letters.attachments.publish');
+
+    Route::post(
+        '/outgoing-letters/{outgoingLetter}/attachments/{attachment}/revoke',
+        [OutgoingLetterController::class, 'revokeAttachment']
+    )->name('outgoing-letters.attachments.revoke');
 });

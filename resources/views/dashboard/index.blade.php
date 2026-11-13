@@ -182,7 +182,7 @@ const IC={};IC.i1=ic('<path d="M22 12h-6l-2 3h-4l-2-3H2M5.5 5h13l3.5 7v6a2 2 0 0
 IC.i2=ic('<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>');
 IC.i3=ic('<path d="M15 14l5-5-5-5M20 9H9a5 5 0 0 0-5 5v6"/>');
 const BL=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-const fd=s=>{const[y,m,d]=s.split('-');return +d+' '+BL[m-1]+' '+y};
+const fd=s=>{if(!s)return '—';const[y,m,d]=s.split('-');return +d+' '+(BL[Number(m)-1]||'')+' '+y};
 const T=(c,t)=>`<span class="tag s-${c}">${t}</span>`;
 const ST={baru:T('n','Baru'),dis:T('w','Didisposisi'),sel:T('ok','Selesai'),proses:T('n','Diproses'),tel:T('r','Terlambat'),arsip:T('g','Diarsipkan')};
 const SL={baru:'Baru',dis:'Didisposisi',sel:'Selesai',proses:'Diproses',tel:'Terlambat'};
@@ -201,10 +201,27 @@ let disp=[
 {s:'004/AG/2026',to:'Keuangan',ins:'Koordinasikan',note:'Kaji penawaran, beri rekomendasi',due:'2026-11-05',st:'proses'},
 {s:'003/AG/2026',to:'Pengurus',ins:'Segera tangani',note:'Siapkan proposal dukungan',due:'2026-11-02',st:'tel'},
 {s:'002/AG/2026',to:'Usaha',ins:'Tindak lanjut',note:'Sesuaikan harga jual',due:'2026-10-30',st:'sel'}];
-let keluar=[
-{no:'021/KK/X/2026',cat:'Konfirmasi',to:'Dinas Koperasi',sub:'Konfirmasi kehadiran rapat',tgl:'2026-11-03',dep:'Sekretariat',f:'021-KK-X-2026.pdf'},
-{no:'020/KK/X/2026',cat:'Keuangan',to:'Bank Mitra',sub:'Jawaban penawaran kredit',tgl:'2026-10-29',dep:'Keuangan',f:'020-KK-X-2026.pdf'},
-{no:'019/KK/X/2026',cat:'Undangan',to:'Seluruh anggota',sub:'Undangan RAT 2026',tgl:'2026-10-27',dep:'Sekretariat',f:'019-KK-X-2026.pdf'}];
+@php
+    $keluarData = $latestOutgoing->map(function ($letter) {
+        return [
+            'id' => $letter->id,
+            'no' => $letter->letter_number,
+            'cat' => $letter->category?->category_name ?? '—',
+            'to' => $letter->recipient ?? '—',
+            'sub' => $letter->subject ?? '—',
+            'tgl' => $letter->letter_date?->format('Y-m-d') ?? '',
+            'dep' => $letter->creator?->name ?? '—',
+            'status' => $letter->status,
+            'url' => route('outgoing-letters.show', $letter->id),
+            'f' => $letter->attachments->first()?->original_name
+                ?? (($letter->letter_number
+                    ? str_replace('/', '-', $letter->letter_number)
+                    : 'surat-keluar') . '.pdf'),
+        ];
+    })->values();
+@endphp
+
+let keluar = @json($keluarData);
 let users=[['Andi Pratama','Admin','Sekretariat',1],['Dewi Rahayu','Sekretaris','Sekretariat',1],['Budi Santoso','Departemen','Keuangan',1],['Sari Wulandari','Departemen','Usaha',1],['Rudi Hartono','Departemen','SDM',0]];
 let acts=[['Surat 005/AG/2026 dicatat','10 menit lalu'],['Disposisi ke Keuangan dibuat','1 jam lalu'],['Surat keluar 021/KK/X/2026 diarsipkan','Kemarin'],['Disposisi 003/AG/2026 melewati batas waktu','Kemarin']];
 const fnm=n=>n.replace(/\//g,'-')+'.pdf';
@@ -219,7 +236,11 @@ function render(){
  const MH=['No. Agenda','No. Surat','Kategori','Pengirim','Perihal','Diterima','Tujuan','Status'];
  $('t-masuk').innerHTML=tb(MH,masuk.map(m=>[m.ag,m.no,m.cat,m.fr,m.sub,fd(m.tr),m.to,ST[m.st]]),1);
  $('t-disp').innerHTML=tb(['Surat','Tujuan','Instruksi','Catatan','Batas Waktu','Status'],disp.map(d=>[d.s,d.to,d.ins,d.note||'-',fd(d.due),ST[d.st]]));
- $('t-keluar').innerHTML=tb(['No. Surat','Kategori','Tujuan','Perihal','Tanggal','Pembuat','Arsip'],keluar.map(k=>[k.no,k.cat,k.to,k.sub,fd(k.tgl),k.dep,ST.arsip]));
+ $('t-keluar').innerHTML=tb(
+  ['No. Surat','Kategori','Tujuan','Perihal','Tanggal','Pembuat','Status'],
+  keluar.map(k=>[k.no,k.cat,k.to,k.sub,k.tgl?fd(k.tgl):'—',k.dep,k.status==='sent'?T('ok','Terkirim'):T('w','Draft')]),
+  1
+ );
  $('t-user').innerHTML=tb(['Nama','Peran','Departemen','Status','Aksi'],users.map((u,i)=>[u[0],u[1],u[2],u[3]?T('ok','Aktif'):T('g','Nonaktif'),`<button class="tgl" data-u="${i}">${u[3]?'Nonaktifkan':'Aktifkan'}</button>`]));
  $('t-dep').innerHTML=tb(['Departemen','Pengguna'],deps.map(d=>[d,users.filter(u=>u[2]===d).length]));
  $('t-cat').innerHTML=tb(['Kategori','Jumlah surat'],cats.map(c=>[c,masuk.filter(m=>m.cat===c).length+keluar.filter(k=>k.cat===c).length]));
@@ -275,7 +296,7 @@ if(t.closest('#lo-out')){$('menu').hidden=true;$('mdl').hidden=false;$('lo-yes')
 if(t.closest('#lo-no')||t.id==='mdl'){$('mdl').hidden=true;return}
 if(t.closest('#lo-yes')){$('mdl').hidden=true;doLogout();return}
 if(!t.closest('#menu'))$('menu').hidden=true;
- const sv=t.closest('[data-save]'),u=t.closest('[data-u]'),ad=t.closest('[data-add]'),dl=t.closest('[data-dl]'),dp=t.closest('[data-disp]'),tr=t.closest('#t-masuk tr[data-i]');
+ const sv=t.closest('[data-save]'),u=t.closest('[data-u]'),ad=t.closest('[data-add]'),dl=t.closest('[data-dl]'),dp=t.closest('[data-disp]'),tr=t.closest('#t-masuk tr[data-i]'),outTr=t.closest('#t-keluar tbody tr[data-i]');
  if(sv){const k=sv.dataset.save;if(SV[k]()){render();show(k);toast('Tersimpan')}return}
  if(u){users[+u.dataset.u][3]^=1;render();toast('Status akun diperbarui');return}
  if(ad){const k=ad.dataset.add,v=V('n-'+k);if(!v)return toast('Isi nama terlebih dahulu');(k==='dep'?deps:cats).push(v);$('n-'+k).value='';render();toast('Ditambahkan');return}
@@ -283,6 +304,11 @@ if(!t.closest('#menu'))$('menu').hidden=true;
  if(dp){sel=+dp.dataset.disp;forms();show('fdisp');$('d-s').selectedIndex=sel;return}
  if(t.closest('[data-h]')){hi=(hi+ +t.closest('[data-h]').dataset.h+3)%3;pos();return}
  if(tr){sel=+tr.dataset.i;det();return}
+ if(outTr){
+  const letter=keluar[+outTr.dataset.i];
+  if(letter?.url){window.location.href=letter.url;}
+  return;
+ }
  if(g)show(g.dataset.go)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('menu').hidden=true;$('mdl').hidden=true}
  if((e.key==='Enter'||e.key===' ')&&document.activeElement.id==='me'){e.preventDefault();$('me').click()}});

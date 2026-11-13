@@ -122,7 +122,7 @@ class DashboardController extends Controller
             ->count();
 
         $latestOutgoing = (clone $outgoing)
-            ->with(['category', 'department'])
+            ->with(['category', 'department', 'creator'])
             ->latest('letter_date')
             ->take(8)
             ->get();
