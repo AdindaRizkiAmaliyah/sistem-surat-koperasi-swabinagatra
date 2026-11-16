@@ -114,7 +114,17 @@ Route::middleware('auth')->group(function () {
             '/incoming-letters/{incomingLetter}/dispositions',
             [DispositionController::class, 'store']
         )->name('dispositions.store');
+        // Menampilkan detail disposisi
+    Route::get(
+        '/dispositions/{disposition}',
+        [DispositionController::class, 'show']
+    )->name('dispositions.show');
 
+    // Mengubah status disposisi
+    Route::patch(
+        '/dispositions/{disposition}/status',
+        [DispositionController::class, 'updateStatus']
+    )->name('dispositions.update-status');
     });
     // ==========================================
     // SURAT KELUAR

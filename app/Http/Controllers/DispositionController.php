@@ -31,32 +31,13 @@ class DispositionController extends Controller
     public function store(Request $request, IncomingLetter $incomingLetter)
     {
         $validated = $request->validate([
-            'to_user_id' => [
-                'nullable',
-                'integer',
-                'exists:users,id',
-            ],
-            'to_department_id' => [
-                'nullable',
-                'integer',
-                'exists:departments,id',
-            ],
-            'instruction' => [
-                'required',
-                'string',
-            ],
-            'notes' => [
-                'nullable',
-                'string',
-            ],
-            'deadline' => [
-                'nullable',
-                'date',
-            ],
+            'to_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'to_department_id' => ['nullable', 'integer', 'exists:departments,id'],
+            'instruction' => ['required', 'string'],
+            'notes' => ['nullable', 'string'],
+            'deadline' => ['nullable', 'date'],
         ]);
 
-        // Tujuan disposisi harus memilih tepat satu:
-        // pengguna tertentu atau departemen.
         $toUserId = $validated['to_user_id'] ?? null;
         $toDepartmentId = $validated['to_department_id'] ?? null;
 
@@ -68,8 +49,8 @@ class DispositionController extends Controller
                 ]);
         }
 
-        // Pastikan pengguna tujuan masih aktif.
-        if ($toUserId && !User::where('id', $toUserId)->where('is_active', true)->exists()) {
+        if ($toUserId && !User::where('id', $toUserId)
+            ->where('is_active', true)->exists()) {
             return back()
                 ->withInput()
                 ->withErrors([
@@ -77,8 +58,8 @@ class DispositionController extends Controller
                 ]);
         }
 
-        // Pastikan departemen tujuan masih aktif.
-        if ($toDepartmentId && !Department::where('id', $toDepartmentId)->where('is_active', true)->exists()) {
+        if ($toDepartmentId && !Department::where('id', $toDepartmentId)
+            ->where('is_active', true)->exists()) {
             return back()
                 ->withInput()
                 ->withErrors([
@@ -100,5 +81,36 @@ class DispositionController extends Controller
         return redirect()
             ->route('incoming-letters.show', $incomingLetter->id)
             ->with('success', 'Disposisi surat berhasil dibuat.');
+    }
+
+    public function show(Disposition $disposition)
+    {
+        $disposition->load([
+            'incomingLetter.category',
+            'sender',
+            'recipient',
+            'department',
+        ]);
+
+        return view('dispositions.show', compact('disposition'));
+    }
+
+    public function updateStatus(Request $request, Disposition $disposition)
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'in:pending,processing,completed'],
+        ]);
+
+        $disposition->status = $validated['status'];
+
+        if ($validated['status'] === 'completed') {
+            $disposition->completed_at = now();
+        } else {
+            $disposition->completed_at = null;
+        }
+
+        $disposition->save();
+
+        return back()->with('success', 'Status disposisi berhasil diperbarui.');
     }
 }

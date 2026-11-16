@@ -20,69 +20,73 @@
         }
 
         .container {
-            max-width: 850px;
+            max-width: 1200px;
             margin: auto;
-            padding: 30px;
-            background: white;
-            border-radius: 10px;
         }
 
-        h2 {
-            color: #1f2937;
-            margin-top: 0;
-        }
-
-        .section-title {
-            margin-top: 30px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .detail-row {
-            display: grid;
-            grid-template-columns: 180px 1fr;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             gap: 15px;
-            padding: 13px 0;
-            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
         }
 
-        .label {
-            font-weight: bold;
-            color: #374151;
-        }
-
-        .value {
-            color: #4b5563;
-            overflow-wrap: anywhere;
-        }
-
-        .attachment {
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-top: 15px;
-        }
-
-        .attachment-title {
-            font-size: 16px;
+        h1 {
+            margin: 0 0 8px;
             color: #1f2937;
-            overflow-wrap: anywhere;
+            font-size: 26px;
+        }
+
+        .description {
+            color: #6b7280;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .card h3 {
+            margin: 0 0 18px;
+            color: #1f2937;
+            font-size: 18px;
         }
 
         .button {
             display: inline-block;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 5px;
+            padding: 10px 15px;
+            border-radius: 6px;
             text-decoration: none;
-            font-size: 14px;
+            border: none;
             cursor: pointer;
-            margin: 5px 5px 5px 0;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            margin: 4px 5px 4px 0;
         }
 
-        .view-button {
+        .primary-button {
             background: #2563eb;
             color: white;
+        }
+
+        .primary-button:hover {
+            background: #1d4ed8;
+        }
+
+        .secondary-button {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .secondary-button:hover {
+            background: #d1d5db;
         }
 
         .download-button {
@@ -90,9 +94,17 @@
             color: white;
         }
 
+        .download-button:hover {
+            background: #047857;
+        }
+
         .publish-button {
             background: #174b35;
             color: white;
+        }
+
+        .publish-button:hover {
+            background: #103d2a;
         }
 
         .revoke-button {
@@ -100,19 +112,74 @@
             color: white;
         }
 
-        .back-button {
-            background: #e5e7eb;
-            color: #333;
-            margin-top: 25px;
+        .revoke-button:hover {
+            background: #b91c1c;
+        }
+
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .section-heading h3 {
+            margin: 0;
+            color: #1f2937;
+            font-size: 18px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0 30px;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 145px minmax(0, 1fr);
+            gap: 12px;
+            padding: 15px 0;
+            border-bottom: 1px solid #e5e7eb;
+            min-width: 0;
+        }
+
+        .detail-row.full {
+            grid-column: 1 / -1;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .value {
+            color: #4b5563;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+            line-height: 1.5;
         }
 
         .status {
             display: inline-block;
-            padding: 7px 11px;
+            padding: 5px 9px;
             border-radius: 5px;
             font-size: 12px;
             font-weight: bold;
-            margin: 12px 0;
+        }
+
+        .status-draft {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-sent {
+            background: #dcfce7;
+            color: #166534;
         }
 
         .status-public {
@@ -130,12 +197,39 @@
             color: #991b1b;
         }
 
+        .attachment {
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #fff;
+        }
+
+        .attachment:last-child {
+            margin-bottom: 0;
+        }
+
+        .attachment-title {
+            font-size: 15px;
+            color: #1f2937;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+            margin-bottom: 8px;
+        }
+
+        .help-text {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 7px 0 12px;
+        }
+
         .public-info {
             background: #f0f7f3;
             border: 1px solid #d4e8da;
-            padding: 15px;
+            padding: 16px;
             border-radius: 7px;
-            margin-top: 15px;
+            margin: 15px 0;
         }
 
         .public-info p {
@@ -146,290 +240,377 @@
 
         .public-url {
             display: block;
-            padding: 10px;
+            padding: 11px;
             background: white;
             border: 1px solid #d1d5db;
             border-radius: 5px;
             color: #174b35;
             overflow-wrap: anywhere;
-            margin-top: 8px;
+            margin: 8px 0;
             font-size: 13px;
+            text-decoration: none;
         }
 
         .alert {
-            padding: 12px 15px;
+            padding: 13px 15px;
             border-radius: 6px;
             margin-bottom: 20px;
-            background: #e6f5ec;
-            color: #187344;
+            background: #dcfce7;
+            color: #166534;
+            font-size: 14px;
         }
 
         .empty {
+            text-align: center;
+            padding: 30px 20px;
+            color: #6b7280;
             background: #f9fafb;
-            padding: 15px;
-            border-radius: 5px;
-            color: #6b7280;
+            border: 1px dashed #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
         }
 
-        .help-text {
-            color: #6b7280;
-            font-size: 13px;
-            line-height: 1.5;
+        .attachment-divider {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 20px 0;
         }
 
-        @media (max-width: 600px) {
+        .publication-title {
+            font-size: 14px;
+            color: #1f2937;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 800px) {
             body {
                 padding: 15px;
             }
 
-            .container {
-                padding: 20px;
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-row.full {
+                grid-column: auto;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .header {
+                align-items: flex-start;
+            }
+
+            h1 {
+                font-size: 23px;
+            }
+
+            .card {
+                padding: 17px;
             }
 
             .detail-row {
                 grid-template-columns: 1fr;
                 gap: 5px;
             }
+
+            .header-actions {
+                width: 100%;
+            }
         }
     </style>
 </head>
 
 <body>
+
 <div class="container">
 
-    <h2>Detail Surat Keluar</h2>
+    <!-- HEADER -->
+    <div class="header">
+        <div>
+            <h1>Detail Surat Keluar</h1>
+            <p class="description">
+                Informasi lengkap dan arsip digital surat keluar koperasi.
+            </p>
+        </div>
 
-    <p style="color: #6b7280;">
-        Informasi lengkap surat keluar yang tersimpan dalam SIRKA.
-    </p>
+        <div class="header-actions">
+            <a href="{{ route('dashboard') }}"
+               class="button secondary-button">
+                ← Kembali ke Daftar
+            </a>
+        </div>
+    </div>
 
+    <!-- PESAN SUKSES -->
     @if (session('success'))
         <div class="alert">
             {{ session('success') }}
         </div>
     @endif
 
-    <h3 class="section-title">Informasi Surat</h3>
+    <!-- INFORMASI SURAT -->
+    <div class="card">
 
-    <div class="detail-row">
-        <div class="label">Nomor Surat</div>
-        <div class="value">{{ $outgoingLetter->letter_number }}</div>
-    </div>
+        <div class="section-heading">
+            <h3>Informasi Surat</h3>
 
-    <div class="detail-row">
-        <div class="label">Kategori</div>
-        <div class="value">
-            {{ $outgoingLetter->category?->category_name ?? '-' }}
+            @if ($outgoingLetter->status === 'sent')
+                <span class="status status-sent">Terkirim</span>
+            @else
+                <span class="status status-draft">Draft</span>
+            @endif
         </div>
-    </div>
 
-    <div class="detail-row">
-        <div class="label">Departemen</div>
-        <div class="value">
-            {{ $outgoingLetter->department?->department_name ?? '-' }}
-        </div>
-    </div>
+        <div class="detail-grid">
 
-    <div class="detail-row">
-        <div class="label">Penerima</div>
-        <div class="value">{{ $outgoingLetter->recipient }}</div>
-    </div>
-
-    <div class="detail-row">
-        <div class="label">Perihal</div>
-        <div class="value">{{ $outgoingLetter->subject }}</div>
-    </div>
-
-    <div class="detail-row">
-        <div class="label">Tanggal Surat</div>
-        <div class="value">
-            {{ $outgoingLetter->letter_date?->format('d-m-Y') ?? '-' }}
-        </div>
-    </div>
-
-    <div class="detail-row">
-        <div class="label">Tanggal Dikirim</div>
-        <div class="value">
-            {{ $outgoingLetter->sent_date?->format('d-m-Y') ?? '-' }}
-        </div>
-    </div>
-
-    <div class="detail-row">
-        <div class="label">Ringkasan</div>
-        <div class="value">{{ $outgoingLetter->summary ?? '-' }}</div>
-    </div>
-
-    <div class="detail-row">
-        <div class="label">Status</div>
-        <div class="value">{{ ucfirst($outgoingLetter->status) }}</div>
-    </div>
-
-    <div class="detail-row">
-        <div class="label">Dicatat Oleh</div>
-        <div class="value">
-            {{ $outgoingLetter->creator?->name ?? '-' }}
-        </div>
-    </div>
-
-    <div class="detail-row">
-        <div class="label">Catatan</div>
-        <div class="value">{{ $outgoingLetter->notes ?? '-' }}</div>
-    </div>
-
-    <h3 class="section-title">Arsip Digital Surat</h3>
-
-    @if ($outgoingLetter->attachments->isNotEmpty())
-
-        @foreach ($outgoingLetter->attachments as $attachment)
-
-            <div class="attachment">
-
-                <div class="attachment-title">
-                    <strong>{{ $attachment->original_name }}</strong>
+            <div class="detail-row">
+                <div class="label">Nomor Surat</div>
+                <div class="value">
+                    {{ $outgoingLetter->letter_number ?? '-' }}
                 </div>
+            </div>
 
-                <p class="help-text">
-                    Ukuran:
-                    {{ number_format(($attachment->file_size ?? 0) / 1024, 2) }} KB
-                </p>
+            <div class="detail-row">
+                <div class="label">Kategori</div>
+                <div class="value">
+                    {{ $outgoingLetter->category?->category_name ?? '-' }}
+                </div>
+            </div>
 
-                <a
-                    href="{{ route('outgoing-letters.attachments.view', [
-                        'outgoingLetter' => $outgoingLetter->id,
-                        'attachment' => $attachment->id
-                    ]) }}"
-                    target="_blank"
-                    class="button view-button"
-                >
-                    Lihat PDF
-                </a>
+            <div class="detail-row">
+                <div class="label">Departemen</div>
+                <div class="value">
+                    {{ $outgoingLetter->department?->department_name ?? '-' }}
+                </div>
+            </div>
 
-                <a
-                    href="{{ route('outgoing-letters.attachments.download', [
-                        'outgoingLetter' => $outgoingLetter->id,
-                        'attachment' => $attachment->id
-                    ]) }}"
-                    class="button download-button"
-                >
-                    Unduh PDF
-                </a>
+            <div class="detail-row">
+                <div class="label">Penerima</div>
+                <div class="value">
+                    {{ $outgoingLetter->recipient ?? '-' }}
+                </div>
+            </div>
 
-                @if (in_array(auth()->user()->role ?? '', ['admin', 'sekretaris']))
+            <div class="detail-row">
+                <div class="label">Tanggal Surat</div>
+                <div class="value">
+                    {{ $outgoingLetter->letter_date?->format('d-m-Y') ?? '-' }}
+                </div>
+            </div>
 
-                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <div class="detail-row">
+                <div class="label">Tanggal Dikirim</div>
+                <div class="value">
+                    {{ $outgoingLetter->sent_date?->format('d-m-Y') ?? '-' }}
+                </div>
+            </div>
 
-                    <strong>Publikasi dan Verifikasi Dokumen</strong>
+            <div class="detail-row full">
+                <div class="label">Perihal</div>
+                <div class="value">
+                    {{ $outgoingLetter->subject ?? '-' }}
+                </div>
+            </div>
 
-                    @if ($attachment->is_public && $attachment->published_at && !$attachment->revoked_at)
+            <div class="detail-row full">
+                <div class="label">Ringkasan</div>
+                <div class="value">
+                    {{ $outgoingLetter->summary ?: '-' }}
+                </div>
+            </div>
 
-                        <div>
+            <div class="detail-row">
+                <div class="label">Dicatat Oleh</div>
+                <div class="value">
+                    {{ $outgoingLetter->creator?->name ?? '-' }}
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="label">Status</div>
+                <div class="value">
+                    {{ ucfirst($outgoingLetter->status ?? '-') }}
+                </div>
+            </div>
+
+            <div class="detail-row full">
+                <div class="label">Catatan</div>
+                <div class="value">
+                    {{ $outgoingLetter->notes ?: '-' }}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ARSIP DIGITAL -->
+    <div class="card">
+
+        <div class="section-heading">
+            <h3>Arsip Digital Surat</h3>
+        </div>
+
+        @if ($outgoingLetter->attachments->isNotEmpty())
+
+            @foreach ($outgoingLetter->attachments as $attachment)
+
+                <div class="attachment">
+
+                    <div class="attachment-title">
+                        {{ $attachment->original_name }}
+                    </div>
+
+                    <p class="help-text">
+                        Ukuran file:
+                        {{ number_format(($attachment->file_size ?? 0) / 1024, 2) }} KB
+                    </p>
+
+                    <div>
+                        <a
+                            href="{{ route('outgoing-letters.attachments.view', [
+                                'outgoingLetter' => $outgoingLetter->id,
+                                'attachment' => $attachment->id
+                            ]) }}"
+                            target="_blank"
+                            class="button primary-button"
+                        >
+                            Lihat PDF
+                        </a>
+
+                        <a
+                            href="{{ route('outgoing-letters.attachments.download', [
+                                'outgoingLetter' => $outgoingLetter->id,
+                                'attachment' => $attachment->id
+                            ]) }}"
+                            class="button download-button"
+                        >
+                            Unduh PDF
+                        </a>
+                    </div>
+
+                    @if (in_array(auth()->user()->role ?? '', ['admin', 'sekretaris']))
+
+                        <hr class="attachment-divider">
+
+                        <div class="publication-title">
+                            Publikasi dan Verifikasi Dokumen
+                        </div>
+
+                        @if ($attachment->is_public && $attachment->published_at && !$attachment->revoked_at)
+
                             <span class="status status-public">
                                 DITERBITKAN / PUBLIK
                             </span>
-                        </div>
 
-                        <div class="public-info">
+                            <div class="public-info">
 
-                            <p><strong>ID Dokumen:</strong></p>
-                            <p>{{ $attachment->public_id }}</p>
+                                <p><strong>ID Dokumen:</strong></p>
+                                <p>{{ $attachment->public_id }}</p>
 
-                            <p><strong>URL Verifikasi:</strong></p>
+                                <p><strong>URL Verifikasi:</strong></p>
 
-                            <a
-                                href="{{ route('documents.verify', $attachment->public_token) }}"
-                                target="_blank"
-                                class="public-url"
+                                <a
+                                    href="{{ route('documents.verify', $attachment->public_token) }}"
+                                    target="_blank"
+                                    class="public-url"
+                                >
+                                    {{ route('documents.verify', $attachment->public_token) }}
+                                </a>
+
+                                <button
+                                    type="button"
+                                    class="button publish-button"
+                                    onclick="copyVerificationUrl(@js(route('documents.verify', $attachment->public_token)))"
+                                >
+                                    Salin URL
+                                </button>
+
+                                <p>
+                                    Diterbitkan pada:
+                                    {{ $attachment->published_at->format('d-m-Y H:i') }}
+                                </p>
+
+                            </div>
+
+                            <form
+                                action="{{ route('outgoing-letters.attachments.revoke', [
+                                    'outgoingLetter' => $outgoingLetter->id,
+                                    'attachment' => $attachment->id
+                                ]) }}"
+                                method="POST"
+                                onsubmit="return confirm('Yakin ingin mencabut akses publik dokumen ini?')"
                             >
-                                {{ route('documents.verify', $attachment->public_token) }}
-                            </a>
+                                @csrf
 
-                            <button
-                                type="button"
-                                class="button publish-button"
-                                onclick="copyVerificationUrl('{{ route('documents.verify', $attachment->public_token) }}')"
-                            >
-                                Salin URL
-                            </button>
+                                <button type="submit" class="button revoke-button">
+                                    Cabut Publikasi
+                                </button>
+                            </form>
 
-                            <p>
-                                Diterbitkan pada:
-                                {{ $attachment->published_at->format('d-m-Y H:i') }}
-                            </p>
+                        @else
 
-                        </div>
-
-                        <form
-                            action="{{ route('outgoing-letters.attachments.revoke', [
-                                'outgoingLetter' => $outgoingLetter->id,
-                                'attachment' => $attachment->id
-                            ]) }}"
-                            method="POST"
-                            onsubmit="return confirm('Yakin ingin mencabut akses publik dokumen ini?')"
-                        >
-                            @csrf
-
-                            <button type="submit" class="button revoke-button">
-                                Cabut Publikasi
-                            </button>
-                        </form>
-
-                    @else
-
-                        @if ($attachment->revoked_at)
-                            <div>
+                            @if ($attachment->revoked_at)
                                 <span class="status status-revoked">
                                     PUBLIKASI DICABUT
                                 </span>
-                            </div>
-                        @else
-                            <div>
+                            @else
                                 <span class="status status-private">
                                     BELUM DITERBITKAN
                                 </span>
-                            </div>
+                            @endif
+
+                            <p class="help-text">
+                                File ini belum dapat diakses oleh pihak luar.
+                                Terbitkan dokumen jika PDF sudah final dan siap dibagikan.
+                            </p>
+
+                            <form
+                                action="{{ route('outgoing-letters.attachments.publish', [
+                                    'outgoingLetter' => $outgoingLetter->id,
+                                    'attachment' => $attachment->id
+                                ]) }}"
+                                method="POST"
+                                onsubmit="return confirm('Terbitkan PDF ini agar dapat diverifikasi oleh pihak luar?')"
+                            >
+                                @csrf
+
+                                <button type="submit" class="button publish-button">
+                                    Terbitkan Dokumen
+                                </button>
+                            </form>
+
                         @endif
-
-                        <p class="help-text">
-                            File ini belum dapat diakses oleh pihak luar.
-                            Terbitkan dokumen jika PDF sudah final dan siap dibagikan.
-                        </p>
-
-                        <form
-                            action="{{ route('outgoing-letters.attachments.publish', [
-                                'outgoingLetter' => $outgoingLetter->id,
-                                'attachment' => $attachment->id
-                            ]) }}"
-                            method="POST"
-                            onsubmit="return confirm('Terbitkan PDF ini agar dapat diverifikasi oleh pihak luar?')"
-                        >
-                            @csrf
-
-                            <button type="submit" class="button publish-button">
-                                Terbitkan Dokumen
-                            </button>
-                        </form>
 
                     @endif
 
-                @endif
+                </div>
 
+            @endforeach
+
+        @else
+
+            <div class="empty">
+                Belum ada arsip PDF untuk surat ini.
             </div>
 
-        @endforeach
+        @endif
 
-    @else
+    </div>
 
-        <div class="empty">
-            Belum ada arsip PDF untuk surat ini.
-        </div>
-
-    @endif
-
+    <!-- TOMBOL KEMBALI -->
     <a
-        href="{{ route('outgoing-letters.index') }}"
-        class="button back-button"
+        href="{{ route('dashboard') }}"
+        class="button secondary-button"
     >
-        Kembali ke Daftar Surat
+        ← Kembali ke Daftar Surat Keluar
     </a>
 
 </div>

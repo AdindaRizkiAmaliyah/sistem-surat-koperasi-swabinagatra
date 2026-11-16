@@ -74,7 +74,7 @@ class DashboardController extends Controller
             ->value('agenda_number') ?? '—';
 
         $latestIncoming = (clone $incoming)
-            ->with(['category', 'creator'])
+            ->with(['category', 'creator', 'attachments'])
             ->latest('received_date')
             ->paginate(8, ['*'], 'incoming_page')
             ->withQueryString();
@@ -122,7 +122,7 @@ class DashboardController extends Controller
             ->count();
 
         $latestOutgoing = (clone $outgoing)
-            ->with(['category', 'department', 'creator'])
+            ->with(['category', 'department', 'creator', 'attachments'])
             ->latest('letter_date')
             ->take(8)
             ->get();

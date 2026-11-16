@@ -189,18 +189,79 @@ const SL={baru:'Baru',dis:'Didisposisi',sel:'Selesai',proses:'Diproses',tel:'Ter
 const tb=(h,r,a)=>`<table><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${r.map((x,i)=>`<tr${a?` data-i="${i}"`:''}>${x.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 let cats=['Undangan','Keuangan','Permohonan','Pemberitahuan','Internal','Konfirmasi'];
 let deps=['Sekretariat','Pengurus','Keuangan','Usaha','SDM'];
-const mk=a=>({ag:a[0],no:a[1],cat:a[2],fr:a[3],sub:a[4],ts:a[5],tr:a[6],to:a[7],sum:a[8],st:a[9]});
-let masuk=[
-['005/AG/2026','112/DK/X/2026','Undangan','Dinas Koperasi','Rapat evaluasi triwulan IV','2026-10-28','2026-11-02','Pengurus','Undangan rapat evaluasi koperasi triwulan IV di kantor Dinas Koperasi.','baru'],
-['004/AG/2026','045/BNK/X/2026','Keuangan','Bank Mitra','Penawaran kredit usaha','2026-10-29','2026-11-01','Keuangan','Penawaran fasilitas kredit usaha untuk modal kerja koperasi.','dis'],
-['003/AG/2026','208/PT/X/2026','Permohonan','PT Swabina Gatra','Permohonan dukungan RAT','2026-10-27','2026-10-30','Pengurus','Permohonan dukungan penyelenggaraan Rapat Anggota Tahunan.','dis'],
-['002/AG/2026','017/SKP/X/2026','Pemberitahuan','Supplier Sembako','Perubahan harga barang','2026-10-26','2026-10-28','Usaha','Pemberitahuan perubahan harga sembako mulai November.','sel'],
-['001/AG/2026','331/INT/X/2026','Internal','Dept. SDM','Data keanggotaan baru','2026-10-24','2026-10-26','Sekretariat','Rekap anggota baru yang bergabung bulan Oktober.','sel']].map(mk);
-let disp=[
-{s:'005/AG/2026',to:'Pengurus',ins:'Tindak lanjut',note:'Hadiri dan laporkan hasil rapat',due:'2026-11-08',st:'proses'},
-{s:'004/AG/2026',to:'Keuangan',ins:'Koordinasikan',note:'Kaji penawaran, beri rekomendasi',due:'2026-11-05',st:'proses'},
-{s:'003/AG/2026',to:'Pengurus',ins:'Segera tangani',note:'Siapkan proposal dukungan',due:'2026-11-02',st:'tel'},
-{s:'002/AG/2026',to:'Usaha',ins:'Tindak lanjut',note:'Sesuaikan harga jual',due:'2026-10-30',st:'sel'}];
+@php
+    $masukData = $latestIncoming->getCollection()->map(function ($letter) {
+        return [
+            'id' => $letter->id,
+            'ag' => $letter->agenda_number ?? '—',
+            'no' => $letter->letter_number ?? '—',
+            'cat' => $letter->category?->category_name ?? '—',
+            'fr' => $letter->sender ?? '—',
+            'sub' => $letter->subject ?? '—',
+            'ts' => $letter->letter_date?->format('Y-m-d') ?? '',
+            'tr' => $letter->received_date?->format('Y-m-d') ?? '',
+            'to' => $letter->destination ?? '—',
+            'sum' => $letter->summary ?? '—',
+            'st' => match ($letter->status) {
+                'registered' => 'baru',
+                'disposed' => 'dis',
+                'completed' => 'sel',
+                'in_progress' => 'proses',
+                'late' => 'tel',
+                default => 'baru',
+            },
+            'url' => route('incoming-letters.show', $letter->id),
+            'attachments' => $letter->attachments->map(fn ($attachment) => [
+            'name' => $attachment->original_name,
+            'view' => route('incoming-letters.attachments.view', [
+                'incomingLetter' => $letter->id,
+                'attachment' => $attachment->id,
+            ]),
+            'download' => route('incoming-letters.attachments.download', [
+                'incomingLetter' => $letter->id,
+                'attachment' => $attachment->id,
+            ]),
+        ])->values(),
+        ];
+    })->values();
+@endphp
+
+let masuk = @json($masukData);
+@php
+    $disposisiData = $latestDispositions->map(function ($disposition) {
+        $status = 'proses';
+
+        if ($disposition->completed_at || $disposition->status === 'completed') {
+            $status = 'sel';
+        } elseif (
+            $disposition->deadline &&
+            $disposition->deadline->lt(today())
+        ) {
+            $status = 'tel';
+        }
+
+        return [
+            'id' => $disposition->id,
+
+            's' => $disposition->incomingLetter?->agenda_number
+                ?? $disposition->incomingLetter?->letter_number
+                ?? '—',
+
+            'to' => $disposition->recipient?->name
+                ?? $disposition->department?->name
+                ?? '—',
+
+            'ins' => $disposition->instruction ?? '—',
+            'note' => $disposition->notes ?? '—',
+
+            'due' => $disposition->deadline?->format('Y-m-d') ?? '',
+
+            'st' => $status,
+        ];
+    })->values();
+@endphp
+
+let disp = @json($disposisiData);
 @php
     $keluarData = $latestOutgoing->map(function ($letter) {
         return [
@@ -217,6 +278,17 @@ let disp=[
                 ?? (($letter->letter_number
                     ? str_replace('/', '-', $letter->letter_number)
                     : 'surat-keluar') . '.pdf'),
+            'attachments' => $letter->attachments->map(fn ($attachment) => [
+            'name' => $attachment->original_name,
+            'view' => route('outgoing-letters.attachments.view', [
+                'outgoingLetter' => $letter->id,
+                'attachment' => $attachment->id,
+            ]),
+            'download' => route('outgoing-letters.attachments.download', [
+                'outgoingLetter' => $letter->id,
+                'attachment' => $attachment->id,
+            ]),
+        ])->values(),
         ];
     })->values();
 @endphp
@@ -235,7 +307,18 @@ Q('#t-masuk tbody tr').forEach(r=>r.style.outline=+r.dataset.i===sel?'2px solid 
 function render(){
  const MH=['No. Agenda','No. Surat','Kategori','Pengirim','Perihal','Diterima','Tujuan','Status'];
  $('t-masuk').innerHTML=tb(MH,masuk.map(m=>[m.ag,m.no,m.cat,m.fr,m.sub,fd(m.tr),m.to,ST[m.st]]),1);
- $('t-disp').innerHTML=tb(['Surat','Tujuan','Instruksi','Catatan','Batas Waktu','Status'],disp.map(d=>[d.s,d.to,d.ins,d.note||'-',fd(d.due),ST[d.st]]));
+ $('t-disp').innerHTML=tb(
+    ['Surat','Tujuan','Instruksi','Catatan','Batas Waktu','Status'],
+    disp.map(d=>[
+        d.s,
+        d.to,
+        d.ins,
+        d.note || '-',
+        fd(d.due),
+        ST[d.st]
+    ]),
+    1
+);
  $('t-keluar').innerHTML=tb(
   ['No. Surat','Kategori','Tujuan','Perihal','Tanggal','Pembuat','Status'],
   keluar.map(k=>[k.no,k.cat,k.to,k.sub,k.tgl?fd(k.tgl):'—',k.dep,k.status==='sent'?T('ok','Terkirim'):T('w','Draft')]),
@@ -244,8 +327,58 @@ function render(){
  $('t-user').innerHTML=tb(['Nama','Peran','Departemen','Status','Aksi'],users.map((u,i)=>[u[0],u[1],u[2],u[3]?T('ok','Aktif'):T('g','Nonaktif'),`<button class="tgl" data-u="${i}">${u[3]?'Nonaktifkan':'Aktifkan'}</button>`]));
  $('t-dep').innerHTML=tb(['Departemen','Pengguna'],deps.map(d=>[d,users.filter(u=>u[2]===d).length]));
  $('t-cat').innerHTML=tb(['Kategori','Jumlah surat'],cats.map(c=>[c,masuk.filter(m=>m.cat===c).length+keluar.filter(k=>k.cat===c).length]));
- const files=[...masuk.map(m=>[fl(m),m.sub,'Surat masuk · '+fd(m.tr)]),...keluar.map(k=>[fl(k),k.sub,'Surat keluar · '+fd(k.tgl)])];
- $('files').innerHTML=files.map(f=>`<div class="pnl fc"><div class="pdf"><div><b>PDF</b></div></div><h4>${f[1]}</h4><p>${f[0]}<br>${f[2]}</p><div class="fb"><button class="btn g" data-dl="${f[0]}">Lihat</button><button class="btn" data-dl="${f[0]}">Unduh</button></div></div>`).join('');
+ const files = [
+    ...masuk.flatMap(m =>
+        (m.attachments || []).map(a => ({
+            name: a.name,
+            subject: m.sub,
+            type: 'Surat Masuk',
+            date: fd(m.tr),
+            view: a.view,
+            download: a.download
+        }))
+    ),
+
+    ...keluar.flatMap(k =>
+        (k.attachments || []).map(a => ({
+            name: a.name,
+            subject: k.sub,
+            type: 'Surat Keluar',
+            date: fd(k.tgl),
+            view: a.view,
+            download: a.download
+        }))
+    )
+];
+
+$('files').innerHTML = files.length
+    ? files.map(f => `
+        <div class="pnl fc">
+            <div class="pdf">
+                <div><b>PDF</b></div>
+            </div>
+
+            <h4>${f.subject || 'Dokumen Surat'}</h4>
+
+            <p>
+                ${f.name}<br>
+                ${f.type} · ${f.date}
+            </p>
+
+            <div class="fb">
+                <a href="${f.view}" target="_blank" class="btn g"
+                   style="text-decoration:none;text-align:center">
+                    Lihat
+                </a>
+
+                <a href="${f.download}" class="btn"
+                   style="text-decoration:none;text-align:center">
+                    Unduh
+                </a>
+            </div>
+        </div>
+    `).join('')
+    : '<div class="pnl fc">Belum ada arsip PDF yang tersimpan.</div>';
  const act=disp.filter(d=>d.st!=='sel');
  hero();det()}
 let hi=0,HS=[];
@@ -296,14 +429,67 @@ if(t.closest('#lo-out')){$('menu').hidden=true;$('mdl').hidden=false;$('lo-yes')
 if(t.closest('#lo-no')||t.id==='mdl'){$('mdl').hidden=true;return}
 if(t.closest('#lo-yes')){$('mdl').hidden=true;doLogout();return}
 if(!t.closest('#menu'))$('menu').hidden=true;
- const sv=t.closest('[data-save]'),u=t.closest('[data-u]'),ad=t.closest('[data-add]'),dl=t.closest('[data-dl]'),dp=t.closest('[data-disp]'),tr=t.closest('#t-masuk tr[data-i]'),outTr=t.closest('#t-keluar tbody tr[data-i]');
+ const sv = t.closest('[data-save]');
+const u = t.closest('[data-u]');
+const ad = t.closest('[data-add]');
+const dl = t.closest('[data-dl]');
+const dp = t.closest('[data-disp]');
+const tr = t.closest('#t-masuk tr[data-i]');
+const dispTr = t.closest('#t-disp tbody tr[data-i]');
+const outTr = t.closest('#t-keluar tbody tr[data-i]');
  if(sv){const k=sv.dataset.save;if(SV[k]()){render();show(k);toast('Tersimpan')}return}
  if(u){users[+u.dataset.u][3]^=1;render();toast('Status akun diperbarui');return}
  if(ad){const k=ad.dataset.add,v=V('n-'+k);if(!v)return toast('Isi nama terlebih dahulu');(k==='dep'?deps:cats).push(v);$('n-'+k).value='';render();toast('Ditambahkan');return}
  if(dl){toast('Membuka '+dl.dataset.dl);return}
- if(dp){sel=+dp.dataset.disp;forms();show('fdisp');$('d-s').selectedIndex=sel;return}
+ if (dispTr) {
+    const disposition = disp[Number(dispTr.dataset.i)];
+
+    if (disposition && disposition.url) {
+        window.location.href = disposition.url;
+    } else {
+        toast('Data detail disposisi tidak ditemukan');
+    }
+
+    return;
+}
+ if (dp) {
+    const disposition = disp[Number(dp.dataset.disp)];
+
+    if (!disposition || !disposition.id) {
+        toast('Data disposisi tidak ditemukan');
+        return;
+    }
+
+    const detailUrl = @json(route('dispositions.show', ['disposition' => 'DISPOSITION_ID']));
+
+    window.location.href = detailUrl.replace(
+        'DISPOSITION_ID',
+        disposition.id
+    );
+
+    return;
+}
  if(t.closest('[data-h]')){hi=(hi+ +t.closest('[data-h]').dataset.h+3)%3;pos();return}
- if(tr){sel=+tr.dataset.i;det();return}
+ if (dispTr) {
+    const disposition = disp[Number(dispTr.dataset.i)];
+
+    if (disposition?.url) {
+        window.location.href = disposition.url;
+    } else {
+        toast('Data detail disposisi tidak ditemukan');
+    }
+
+    return;
+}
+ if(tr){
+    const letter = masuk[+tr.dataset.i];
+
+    if(letter?.url){
+        window.location.href = letter.url;
+    }
+
+    return;
+}
  if(outTr){
   const letter=keluar[+outTr.dataset.i];
   if(letter?.url){window.location.href=letter.url;}
