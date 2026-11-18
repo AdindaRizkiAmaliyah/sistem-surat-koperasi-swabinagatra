@@ -13,12 +13,20 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
+        // Query utama
         $incoming = IncomingLetter::query();
         $outgoing = OutgoingLetter::query();
         $dispositions = Disposition::query();
 
-        // Admin dan sekretaris dapat melihat seluruh data.
-        // Staff hanya melihat data yang berkaitan dengan dirinya.
+        /*
+        |--------------------------------------------------------------------------
+        | Hak Akses
+        |--------------------------------------------------------------------------
+        | Admin dan sekretaris dapat melihat seluruh data.
+        | Pengguna departemen hanya melihat surat dan disposisi
+        | yang ditujukan kepada dirinya atau departemennya.
+        */
+
         if (!in_array($user->role, ['admin', 'sekretaris'], true)) {
 
             $incoming->whereHas('dispositions', function ($query) use ($user) {
@@ -51,13 +59,16 @@ class DashboardController extends Controller
                     $user->department_id
                 );
             } else {
+                // Pengguna tanpa departemen tidak melihat surat keluar.
                 $outgoing->whereRaw('1 = 0');
             }
         }
 
-        // =========================
-        // SURAT MASUK
-        // =========================
+        /*
+        |--------------------------------------------------------------------------
+        | SURAT MASUK
+        |--------------------------------------------------------------------------
+        */
 
         $incomingCount = (clone $incoming)->count();
 
@@ -74,14 +85,20 @@ class DashboardController extends Controller
             ->value('agenda_number') ?? '—';
 
         $latestIncoming = (clone $incoming)
-            ->with(['category', 'creator', 'attachments'])
+            ->with([
+                'category',
+                'creator',
+                'attachments',
+            ])
             ->latest('received_date')
             ->paginate(8, ['*'], 'incoming_page')
             ->withQueryString();
 
-        // =========================
-        // DISPOSISI
-        // =========================
+        /*
+        |--------------------------------------------------------------------------
+        | DISPOSISI
+        |--------------------------------------------------------------------------
+        */
 
         $dispositionCount = (clone $dispositions)->count();
 
@@ -90,25 +107,31 @@ class DashboardController extends Controller
             ->count();
 
         $completedDispositionCount = (clone $dispositions)
-            ->whereNotNull('completed_at')
+            ->where(function ($query) {
+                $query->where('status', 'completed')
+                    ->orWhereNotNull('completed_at');
+            })
             ->count();
 
-        $processingDispositionCount = max(
-            0,
-            $dispositionCount
-            - $pendingDispositionCount
-            - $completedDispositionCount
-        );
+        $processingDispositionCount = (clone $dispositions)
+            ->where('status', 'processing')
+            ->count();
 
         $latestDispositions = (clone $dispositions)
-            ->with(['incomingLetter', 'department', 'recipient'])
+            ->with([
+                'incomingLetter.category',
+                'department',
+                'recipient',
+            ])
             ->latest()
             ->take(8)
             ->get();
 
-        // =========================
-        // SURAT KELUAR
-        // =========================
+        /*
+        |--------------------------------------------------------------------------
+        | SURAT KELUAR
+        |--------------------------------------------------------------------------
+        */
 
         $outgoingCount = (clone $outgoing)->count();
 
@@ -122,65 +145,91 @@ class DashboardController extends Controller
             ->count();
 
         $latestOutgoing = (clone $outgoing)
-            ->with(['category', 'department', 'creator', 'attachments'])
+            ->with([
+                'category',
+                'department',
+                'creator',
+                'attachments',
+            ])
             ->latest('letter_date')
             ->take(8)
             ->get();
 
-        // =========================
-        // ARSIP SURAT
-        // =========================
+        /*
+        |--------------------------------------------------------------------------
+        | ARSIP SURAT
+        |--------------------------------------------------------------------------
+        */
 
         $archiveItems = collect();
 
+        // Arsip surat masuk
         $incomingArchives = (clone $incoming)
-            ->with(['category', 'attachments'])
+            ->with([
+                'category',
+                'attachments',
+            ])
             ->get();
 
         foreach ($incomingArchives as $letter) {
             foreach ($letter->attachments as $attachment) {
                 $archiveItems->push([
+                    'id' => $attachment->id,
                     'number' => $letter->letter_number
-                        ?: $letter->agenda_number,
+                        ?: $letter->agenda_number
+                        ?: '—',
 
                     'type' => 'Surat Masuk',
-                    'subject' => $letter->subject,
+                    'subject' => $letter->subject ?? '—',
 
-                    'category' => $letter->category->category_name
+                    'category' => $letter->category?->category_name
                         ?? '—',
 
-                    'date' => optional($letter->received_date)
-                        ->format('d M Y'),
+                    'date' => $letter->received_date
+                        ? $letter->received_date->format('d M Y')
+                        : '—',
+
+                    'file_name' => $attachment->original_name ?? 'Dokumen',
                 ]);
             }
         }
 
+        // Arsip surat keluar
         $outgoingArchives = (clone $outgoing)
-            ->with(['category', 'attachments'])
+            ->with([
+                'category',
+                'attachments',
+            ])
             ->get();
 
         foreach ($outgoingArchives as $letter) {
             foreach ($letter->attachments as $attachment) {
                 $archiveItems->push([
-                    'number' => $letter->letter_number,
-                    'type' => 'Surat Keluar',
-                    'subject' => $letter->subject,
+                    'id' => $attachment->id,
+                    'number' => $letter->letter_number ?? '—',
 
-                    'category' => $letter->category->category_name
+                    'type' => 'Surat Keluar',
+                    'subject' => $letter->subject ?? '—',
+
+                    'category' => $letter->category?->category_name
                         ?? '—',
 
-                    'date' => optional(
-                        $letter->sent_date ?: $letter->letter_date
-                    )->format('d M Y'),
+                    'date' => ($letter->sent_date ?: $letter->letter_date)
+                        ? ($letter->sent_date ?: $letter->letter_date)->format('d M Y')
+                        : '—',
+
+                    'file_name' => $attachment->original_name ?? 'Dokumen',
                 ]);
             }
         }
 
         $archiveCount = $archiveItems->count();
 
-        // =========================
-        // KIRIM DATA KE DASHBOARD
-        // =========================
+        /*
+        |--------------------------------------------------------------------------
+        | KIRIM DATA KE DASHBOARD
+        |--------------------------------------------------------------------------
+        */
 
         return view('dashboard.index', compact(
             'user',

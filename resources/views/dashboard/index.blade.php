@@ -211,6 +211,9 @@ let deps=['Sekretariat','Pengurus','Keuangan','Usaha','SDM'];
                 default => 'baru',
             },
             'url' => route('incoming-letters.show', $letter->id),
+            'dispositionUrl' => route('dispositions.create', [
+                'incomingLetter' => $letter->id,
+            ]),
             'attachments' => $letter->attachments->map(fn ($attachment) => [
             'name' => $attachment->original_name,
             'view' => route('incoming-letters.attachments.view', [
@@ -227,11 +230,15 @@ let deps=['Sekretariat','Pengurus','Keuangan','Usaha','SDM'];
 @endphp
 
 let masuk = @json($masukData);
+
 @php
     $disposisiData = $latestDispositions->map(function ($disposition) {
         $status = 'proses';
 
-        if ($disposition->completed_at || $disposition->status === 'completed') {
+        if (
+            $disposition->completed_at ||
+            $disposition->status === 'completed'
+        ) {
             $status = 'sel';
         } elseif (
             $disposition->deadline &&
@@ -248,20 +255,23 @@ let masuk = @json($masukData);
                 ?? '—',
 
             'to' => $disposition->recipient?->name
-                ?? $disposition->department?->name
+                ?? $disposition->department?->department_name
                 ?? '—',
 
             'ins' => $disposition->instruction ?? '—',
             'note' => $disposition->notes ?? '—',
-
             'due' => $disposition->deadline?->format('Y-m-d') ?? '',
-
             'st' => $status,
+
+            'url' => route('dispositions.show', [
+                'disposition' => $disposition->id,
+            ]),
         ];
     })->values();
 @endphp
 
 let disp = @json($disposisiData);
+
 @php
     $keluarData = $latestOutgoing->map(function ($letter) {
         return [
@@ -300,10 +310,95 @@ const fnm=n=>n.replace(/\//g,'-')+'.pdf';
 const fl=m=>m.f||fnm(m.no);
 let sel=0,role='sek';
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2200)}
-function det(){const m=masuk[sel];$('det').innerHTML=`<h3>Detail &amp; Arsip</h3><div class="pdf"><div><b>PDF</b>${fl(m)}</div></div>
-<div class="row"><span>No. Agenda</span><b>${m.ag}</b></div><div class="row"><span>Pengirim</span><b>${m.fr}</b></div><div class="row"><span>Kategori</span><b>${m.cat}</b></div><div class="row"><span>Tgl. surat</span><b>${fd(m.ts)}</b></div><div class="row"><span>Diterima</span><b>${fd(m.tr)}</b></div><div class="row"><span>Tujuan</span><b>${m.to}</b></div><div class="row"><span>Status</span>${ST[m.st]}</div>
-<p>${m.sum||'-'}</p><button class="btn w" data-disp="${sel}" style="padding:9px">Buat Disposisi</button><button class="btn g" data-dl="${fl(m)}" style="padding:9px">Unduh PDF</button>`;
-Q('#t-masuk tbody tr').forEach(r=>r.style.outline=+r.dataset.i===sel?'2px solid var(--acc)':'')}
+
+function det() {
+    const m = masuk[sel];
+
+    if (!m) {
+        $('det').innerHTML = `
+            <h3>Detail &amp; Arsip</h3>
+            <div class="pdf">
+                <div>
+                    <b>PDF</b>
+                    Belum ada surat masuk
+                </div>
+            </div>
+            <p>Belum ada data surat masuk yang dapat ditampilkan.</p>
+        `;
+        return;
+    }
+
+    $('det').innerHTML = `
+        <h3>Detail &amp; Arsip</h3>
+
+        <div class="pdf">
+            <div>
+                <b>PDF</b>
+                ${fl(m)}
+            </div>
+        </div>
+
+        <div class="row">
+            <span>No. Agenda</span>
+            <b>${m.ag || '—'}</b>
+        </div>
+
+        <div class="row">
+            <span>Pengirim</span>
+            <b>${m.fr || '—'}</b>
+        </div>
+
+        <div class="row">
+            <span>Kategori</span>
+            <b>${m.cat || '—'}</b>
+        </div>
+
+        <div class="row">
+            <span>Tgl. Surat</span>
+            <b>${fd(m.ts)}</b>
+        </div>
+
+        <div class="row">
+            <span>Diterima</span>
+            <b>${fd(m.tr)}</b>
+        </div>
+
+        <div class="row">
+            <span>Tujuan</span>
+            <b>${m.to || '—'}</b>
+        </div>
+
+        <div class="row">
+            <span>Status</span>
+            ${ST[m.st] || ST.baru}
+        </div>
+
+        <p>${m.sum || 'Tidak ada ringkasan surat.'}</p>
+
+        <button
+            class="btn w"
+            data-disp="${sel}"
+            style="padding:9px"
+        >
+            Buat Disposisi
+        </button>
+
+        <button
+            class="btn g"
+            data-dl="${fl(m)}"
+            style="padding:9px"
+        >
+            Unduh PDF
+        </button>
+    `;
+
+    Q('#t-masuk tbody tr').forEach(r => {
+        r.style.outline =
+            Number(r.dataset.i) === sel
+                ? '2px solid var(--acc)'
+                : '';
+    });
+}
 function render(){
  const MH=['No. Agenda','No. Surat','Kategori','Pengirim','Perihal','Diterima','Tujuan','Status'];
  $('t-masuk').innerHTML=tb(MH,masuk.map(m=>[m.ag,m.no,m.cat,m.fr,m.sub,fd(m.tr),m.to,ST[m.st]]),1);
@@ -382,13 +477,94 @@ $('files').innerHTML = files.length
  const act=disp.filter(d=>d.st!=='sel');
  hero();det()}
 let hi=0,HS=[];
-function hero(){const dn=disp.filter(d=>d.st!=='sel').length,tl=disp.filter(d=>d.st==='tel').length,nb=masuk.filter(m=>m.st==='baru').length;
- const ml=a=>`<div class="mini">${a.join('')}</div>`,mr=(l,r)=>`<div><span>${l}</span>${r}</div>`,C=['#0A6CFF','#F0364F','#E08A00','#52627D'];
- HS=[{t:'Surat Masuk Hari Ini',p:`Ada ${masuk.length} surat masuk tercatat, ${nb} belum didisposisi. Terbaru: ${masuk[0].sub}.`,g:'masuk',i:'i1',h:'Surat Masuk',s:`${masuk.length} surat · ${nb} baru`,b:ml(masuk.slice(0,3).map(m=>mr(m.ag,ST[m.st])))},
- {t:'Disposisi Aktif',p:`${dn} disposisi menunggu tindak lanjut, ${tl} melewati batas waktu.`,g:'disp',i:'i3',h:'Disposisi',s:`${dn} aktif · ${tl} terlambat`,b:`<div class="bigp">${dn}</div><div class="avs">${deps.slice(0,4).map((d,i)=>`<i style="background:${C[i]}">${d.slice(0,2).toUpperCase()}</i>`).join('')}</div>`},
- {t:'Surat Keluar',p:`${keluar.length} surat keluar sudah tercatat dan diarsipkan. Terbaru: ${keluar[0].sub}.`,g:'keluar',i:'i2',h:'Surat Keluar',s:`${keluar.length} surat diarsipkan`,b:ml(keluar.slice(0,3).map(k=>mr(k.no,ST.arsip)))}];
- $('hs').innerHTML=HS.map((s,i)=>`<div class="hc c${i+1}"><div class="hic">${IC[s.i]}</div><h4>${s.h}</h4><div class="s">${s.s}</div>${s.b}</div>`).join('');pos()}
-function pos(){const s=HS[hi];$('h-t').textContent=s.t;$('h-p').textContent=s.p;$('hb').dataset.go=s.g;Q('.hc').forEach((c,i)=>c.className='hc c'+(i+1)+' p'+((i-hi+3)%3))}
+
+function hero() {
+    const dn = disp.filter(d => d.st !== 'sel').length;
+    const tl = disp.filter(d => d.st === 'tel').length;
+    const nb = masuk.filter(m => m.st === 'baru').length;
+
+    const latestIncoming = masuk[0]?.sub || 'Belum ada surat masuk';
+    const latestOutgoing = keluar[0]?.sub || 'Belum ada surat keluar';
+
+    const ml = a => `<div class="mini">${a.join('')}</div>`;
+    const mr = (l, r) => `<div><span>${l}</span>${r}</div>`;
+
+    const C = ['#0A6CFF', '#F0364F', '#E08A00', '#52627D'];
+
+    HS = [
+        {
+            t: 'Surat Masuk Hari Ini',
+            p: `Ada ${masuk.length} surat masuk tercatat, ${nb} belum didisposisi. Terbaru: ${latestIncoming}.`,
+            g: 'masuk',
+            i: 'i1',
+            h: 'Surat Masuk',
+            s: `${masuk.length} surat · ${nb} baru`,
+            b: ml(
+                masuk.length
+                    ? masuk.slice(0, 3).map(m => mr(m.ag || '—', ST[m.st] || ST.baru))
+                    : [mr('—', 'Belum ada data')]
+            )
+        },
+
+        {
+            t: 'Disposisi Aktif',
+            p: `${dn} disposisi menunggu tindak lanjut, ${tl} melewati batas waktu.`,
+            g: 'disp',
+            i: 'i3',
+            h: 'Disposisi',
+            s: `${dn} aktif · ${tl} terlambat`,
+            b: `
+                <div class="bigp">${dn}</div>
+                <div class="avs">
+                    ${deps.slice(0, 4).map((d, i) =>
+                        `<i style="background:${C[i]}">${d.slice(0, 2).toUpperCase()}</i>`
+                    ).join('')}
+                </div>
+            `
+        },
+
+        {
+            t: 'Surat Keluar',
+            p: `${keluar.length} surat keluar tercatat. Terbaru: ${latestOutgoing}.`,
+            g: 'keluar',
+            i: 'i2',
+            h: 'Surat Keluar',
+            s: `${keluar.length} surat tercatat`,
+            b: ml(
+                keluar.length
+                    ? keluar.slice(0, 3).map(k => mr(k.no || '—', ST.arsip))
+                    : [mr('—', 'Belum ada data')]
+            )
+        }
+    ];
+
+    $('hs').innerHTML = HS.map((s, i) => `
+        <div class="hc c${i + 1}">
+            <div class="hic">${IC[s.i]}</div>
+            <h4>${s.h}</h4>
+            <div class="s">${s.s}</div>
+            ${s.b}
+        </div>
+    `).join('');
+
+    pos();
+}
+
+function pos() {
+    if (!HS.length) return;
+
+    hi = Math.max(0, Math.min(hi, HS.length - 1));
+
+    const s = HS[hi];
+
+    $('h-t').textContent = s.t;
+    $('h-p').textContent = s.p;
+    $('hb').dataset.go = s.g;
+
+    Q('.hc').forEach((c, i) => {
+        c.className = 'hc c' + (i + 1) + ' p' + ((i - hi + 3) % 3);
+    });
+}
 const F=(l,id,t,o,full)=>`<div class="${full?'full':''}"><label for="${id}">${l}</label>${t==='sel'?`<select class="f" id="${id}">${o.map(x=>`<option>${x}</option>`).join('')}</select>`:t==='ta'?`<textarea class="f" id="${id}" rows="3"></textarea>`:`<input class="f" id="${id}" type="${t}"${o?` value="${o}"`:''}>`}</div>`;
 const A=(k,b)=>`<div class="acts"><button class="btn g" data-go="${k}">Batal</button><button class="btn" data-save="${k}">${b}</button></div>`;
 function forms(){
@@ -429,7 +605,7 @@ if(t.closest('#lo-out')){$('menu').hidden=true;$('mdl').hidden=false;$('lo-yes')
 if(t.closest('#lo-no')||t.id==='mdl'){$('mdl').hidden=true;return}
 if(t.closest('#lo-yes')){$('mdl').hidden=true;doLogout();return}
 if(!t.closest('#menu'))$('menu').hidden=true;
- const sv = t.closest('[data-save]');
+const sv = t.closest('[data-save]');
 const u = t.closest('[data-u]');
 const ad = t.closest('[data-add]');
 const dl = t.closest('[data-dl]');
@@ -452,21 +628,15 @@ const outTr = t.closest('#t-keluar tbody tr[data-i]');
 
     return;
 }
- if (dp) {
-    const disposition = disp[Number(dp.dataset.disp)];
+if (dp) {
+    const letter = masuk[Number(dp.dataset.disp)];
 
-    if (!disposition || !disposition.id) {
-        toast('Data disposisi tidak ditemukan');
+    if (!letter || !letter.dispositionUrl) {
+        toast('Halaman pembuatan disposisi tidak ditemukan');
         return;
     }
 
-    const detailUrl = @json(route('dispositions.show', ['disposition' => 'DISPOSITION_ID']));
-
-    window.location.href = detailUrl.replace(
-        'DISPOSITION_ID',
-        disposition.id
-    );
-
+    window.location.href = letter.dispositionUrl;
     return;
 }
  if(t.closest('[data-h]')){hi=(hi+ +t.closest('[data-h]').dataset.h+3)%3;pos();return}
